@@ -1,0 +1,16 @@
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# The default root path for Ansible config files on the controller
+.ansible/
+
+# Retry files generated for failed Ansible playbook runs
+*.retry

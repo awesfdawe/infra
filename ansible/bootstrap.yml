@@ -1,0 +1,10 @@
+---
+- name: Bootstrap servers
+  hosts: all
+
+  pre_tasks:
+    - name: Run OS validation
+      ansible.builtin.include_tasks: tasks/validate_distro.yml
+
+  tasks:
+    - name:

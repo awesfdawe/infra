@@ -1,0 +1,36 @@
+---
+- name: Create admin group
+  ansible.builtin.group:
+    name: admin
+    gid: 1000
+
+- name: Create admin user
+  ansible.builtin.user:
+    name: admin
+    uid: 1000
+    group: admin
+    append: true
+    groups: sudo
+    password: "pass_here"
+
+- name: Create deploy group
+  ansible.builtin.group:
+    name: deploy
+    gid: 1000
+
+- name: Create deploy user
+  ansible.builtin.user:
+    name: deploy
+    group: deploy
+    append: true
+    groups: sudo
+    password: "!"
+
+- name: Sudo without password for deploy user
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/deploy
+    content: "deploy ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
