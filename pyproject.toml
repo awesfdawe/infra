@@ -1,0 +1,15 @@
+[project]
+name = "infra"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "ansible-core>=2.21.3",
+    "mitogen>=0.3.51",
+]
+
+[dependency-groups]
+dev = [
+    "ansible-lint>=26.8.0",
+]
