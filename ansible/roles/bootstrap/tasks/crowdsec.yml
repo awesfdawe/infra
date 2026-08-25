@@ -1,0 +1,43 @@
+---
+- name: Configure crowdsec apt repository
+  ansible.builtin.deb822_repository:
+    name: crowdsec
+    types: deb
+    uris: https://packagecloud.io/crowdsec/crowdsec/any
+    suites: any
+    components: main
+    signed_by: https://packagecloud.io/crowdsec/crowdsec/gpgkey
+  notify: Update apt cache
+  become: true
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Install crowdsec and firewall bouncer
+  ansible.builtin.apt:
+    pkg:
+      - crowdsec
+      - crowdsec-firewall-bouncer-nftables
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Enable and start crowdsec service
+  ansible.builtin.systemd_service:
+    name: crowdsec
+    enabled: true
+    state: started
+  become: true
+
+# - name: Wait for CrowdSec LAPI port to become available
+#   ansible.builtin.wait_for:
+#     port: 8080
+#     delay: 2
+#     timeout: 30
+
+- name: Enable and start crowdsec firewall bouncer service
+  ansible.builtin.systemd_service:
+    name: crowdsec-firewall-bouncer
+    enabled: true
+    state: started
+  become: true

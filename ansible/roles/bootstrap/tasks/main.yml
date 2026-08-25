@@ -1,0 +1,47 @@
+---
+- name: Install essential packages
+  ansible.builtin.apt:
+    pkg:
+      - btop
+      - fzf
+      - rsync
+      - curl
+      - wget
+      - jq
+      - zip
+      - unzip
+      - p7zip-full
+      - >-
+        linux-headers-{{
+          {
+            'x86_64': 'amd64',
+            'aarch64': 'arm64',
+            'armv7l': 'armhf',
+            'i686': 'i386'
+          }.get(ansible_facts['architecture'], ansible_facts['architecture'])
+        }}
+      - firewalld
+      - unattended-upgrades
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Enable and start firewalld service
+  ansible.builtin.systemd_service:
+    name: firewalld
+    enabled: true
+    state: started
+  become: true
+
+- name: Enable and start unattended-upgrades service
+  ansible.builtin.systemd_service:
+    name: unattended-upgrades
+    enabled: true
+    state: started
+  become: true
+
+- name: Include docker task
+  ansible.builtin.include_tasks: docker.yml
+# - name: Include crowdec task
+#   ansible.builtin.include_tasks: docker.yml
+# LATER

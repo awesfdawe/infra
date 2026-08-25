@@ -1,7 +1,8 @@
+---
 - name: Verify that the host is running a supported Debian version (13)
   ansible.builtin.fail:
     msg: >
-      {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} is not supported by these playbooks.
+      {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_major_version'] }} is not supported by these playbooks.
       Only Debian 13 is supported.
   when: >
     ansible_facts['distribution'] != 'Debian' or

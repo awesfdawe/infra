@@ -1,0 +1,52 @@
+---
+- name: Configure docker apt repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/debian
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components:
+      - stable
+    architectures:
+      "{{ {'x86_64': 'amd64', 'aarch64': 'arm64', 'armv7l': 'armhf', 'i686': 'i386'}.get(ansible_facts['architecture'], ansible_facts['architecture'])
+      }}"
+    signed_by: https://download.docker.com/linux/debian/gpg
+  notify: Update apt cache
+  become: true
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Install docker
+  ansible.builtin.apt:
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Enable and start docker service
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: Configure docker daemon
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    content: |
+      {
+        "userland-proxy": false,
+        "userns-remap": "default"
+      }
+  notify: Restart docker
+  become: true
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers

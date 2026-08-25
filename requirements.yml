@@ -1,5 +1,10 @@
+---
 collections:
   - name: serverscom.mitogen
     version: "1.4.1"
   - name: community.general
     version: "13.3.0"
+  - name: ansible.posix
+    version: "2.2.2"
+  - name: devsec.hardening
+    version: "10.6.0"

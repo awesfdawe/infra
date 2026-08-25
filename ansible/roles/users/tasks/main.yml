@@ -3,6 +3,7 @@
   ansible.builtin.group:
     name: admin
     gid: 1000
+  become: true
 
 - name: Create admin user
   ansible.builtin.user:
@@ -11,12 +12,20 @@
     group: admin
     append: true
     groups: sudo
-    password: "pass_here"
+    shell: /bin/bash
+    password: "{{ users_admin_password_hash }}"
+  become: true
+
+- name: Set public key for admin user
+  ansible.posix.authorized_key:
+    user: admin
+    key: "{{ users_admin_public_key }}"
+  become: true
 
 - name: Create deploy group
   ansible.builtin.group:
     name: deploy
-    gid: 1000
+  become: true
 
 - name: Create deploy user
   ansible.builtin.user:
@@ -24,7 +33,15 @@
     group: deploy
     append: true
     groups: sudo
+    shell: /bin/bash
     password: "!"
+  become: true
+
+- name: Set public key for deploy user
+  ansible.posix.authorized_key:
+    user: deploy
+    key: "{{ users_deploy_public_key }}"
+  become: true
 
 - name: Sudo without password for deploy user
   ansible.builtin.copy:
@@ -34,3 +51,4 @@
     group: root
     mode: "0440"
     validate: /usr/sbin/visudo -cf %s
+  become: true
