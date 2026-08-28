@@ -1,0 +1,14 @@
+:8080 {
+    handle /index.php/login {
+        respond "Incorrect login or password." 401
+    }
+
+    handle_path {$PATH_PREFIX}* {
+        reverse_proxy subscription-server:8000
+    }
+
+    handle {
+        root * /srv
+        file_server
+    }
+}

@@ -50,3 +50,12 @@
 
 - name: Flush handlers now
   ansible.builtin.meta: flush_handlers
+
+- name: Create docker volumes folder
+  ansible.builtin.file:
+    path: /mnt/docker-volumes
+    state: directory
+    owner: 1000
+    group: 1000
+    mode: "0750"
+  become: true

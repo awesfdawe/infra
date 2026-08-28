@@ -1,0 +1,21 @@
+---
+- name: Restart subscription server
+  community.docker.docker_compose_v2:
+    project_src: /home/admin/proxy
+    services: ["subscription-server"]
+    state: restarted
+  become: true
+
+- name: Restart caddy
+  community.docker.docker_compose_v2:
+    project_src: /home/admin/proxy
+    services: ["caddy"]
+    state: restarted
+  become: true
+
+- name: Restart hysteria
+  community.docker.docker_compose_v2:
+    project_src: /home/admin/proxy
+    services: ["hysteria"]
+    state: restarted
+  become: true

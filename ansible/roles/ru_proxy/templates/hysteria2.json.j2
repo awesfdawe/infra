@@ -1,0 +1,25 @@
+{
+    "outbounds": [
+        {
+            "protocol": "hysteria",
+            "settings": {
+                "version": 2,
+                "address": "{{ proxy_domain }}",
+                "port": 443
+            },
+            "streamSettings": {
+                "network": "hysteria",
+                "hysteriaSettings": {
+                    "version": 2,
+                    "auth": "{{ proxy_password }}"
+                },
+                "security": "tls",
+                "tlsSettings": {
+                    "serverName": "{{ proxy_domain }}"
+                }
+            },
+            "tag": "hysteria2"
+        }
+    ],
+    "remarks": "🇷🇺 Россия без ТСПУ"
+}

@@ -6,3 +6,6 @@
 
 # inventory folder (temporary)
 inventory/
+
+# Python venv
+.venv/

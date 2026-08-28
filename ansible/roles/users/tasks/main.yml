@@ -13,7 +13,7 @@
     append: true
     groups: sudo
     shell: /bin/bash
-    password: "{{ users_admin_password_hash }}"
+    password: "{{ users_admin_password | password_hash('yescrypt') }}"
   become: true
 
 - name: Set public key for admin user

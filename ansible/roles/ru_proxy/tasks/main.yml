@@ -1,0 +1,96 @@
+---
+- name: Create service folder
+  ansible.builtin.file:
+    path: /home/admin/proxy
+    state: directory
+    owner: 1000
+    group: 1000
+    mode: "0750"
+  become: true
+
+- name: Copy docker compose file
+  ansible.builtin.copy:
+    src: docker-compose.yaml
+    dest: /home/admin/proxy/docker-compose.yaml
+    owner: 1000
+    group: 1000
+    mode: "0644"
+  become: true
+
+- name: Create env file
+  ansible.builtin.copy:
+    content: |
+      PATH_PREFIX={{ proxy_path_prefix }}
+    dest: /home/admin/proxy/.env
+    owner: 1000
+    group: 1000
+    mode: "0600"
+  become: true
+
+- name: Copy Caddyfile
+  ansible.builtin.copy:
+    src: Caddyfile
+    dest: /home/admin/proxy/Caddyfile
+    owner: 100000
+    group: 100000
+    mode: "0644"
+  notify: Restart caddy
+  become: true
+
+- name: Copy fake site file
+  ansible.builtin.copy:
+    src: index.html
+    dest: /home/admin/proxy/index.html
+    owner: 100000
+    group: 100000
+    mode: "0644"
+  become: true
+
+- name: Template hysteria config
+  ansible.builtin.template:
+    src: hysteria.yaml.j2
+    dest: /home/admin/proxy/hysteria.yaml
+    owner: 100000
+    group: 100000
+    mode: "0600"
+  notify: Restart hysteria
+  become: true
+
+- name: Template hysteria xray config
+  ansible.builtin.template:
+    src: hysteria2.json.j2
+    dest: /home/admin/proxy/hysteria2.json
+    owner: 100000
+    group: 100000
+    mode: "0600"
+  notify: Restart subscription server
+  become: true
+
+- name: Copy subscription server config
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/group_vars/ru_proxy/config.yaml"
+    dest: /home/admin/proxy/config.yaml
+    owner: 100000
+    group: 100000
+    mode: "0600"
+  notify: Restart subscription server
+  become: true
+
+- name: Copy subscription server users
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/group_vars/ru_proxy/users.yaml"
+    dest: /home/admin/proxy/users.yaml
+    owner: 100000
+    group: 100000
+    mode: "0600"
+  notify: Restart subscription server
+  become: true
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Up containers
+  community.docker.docker_compose_v2:
+    project_src: /home/admin/proxy
+    state: present
+  become: true

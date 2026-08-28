@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nextcloud</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='20' fill='%23ffffff'/><circle cx='25' cy='50' r='14' fill='%23ffffff'/><circle cx='75' cy='50' r='14' fill='%23ffffff'/></svg>"
+    />
+    <style>
+      :root {
+        --nc-blue: #0082c9;
+        --nc-dark: #006097;
+        --nc-bg: #182531;
+        --nc-card: rgba(255, 255, 255, 0.08);
+        --nc-border: rgba(255, 255, 255, 0.16);
+        --nc-text: #ffffff;
+        --nc-text-dim: rgba(255, 255, 255, 0.7);
+        --nc-error: #e9322d;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        background: radial-gradient(
+          circle at 50% 20%,
+          #005080 0%,
+          #031422 100%
+        );
+        color: var(--nc-text);
+        padding: 24px;
+      }
+      .wrapper {
+        width: 100%;
+        max-width: 360px;
+        margin: auto 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .logo {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .card {
+        width: 100%;
+        background: var(--nc-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--nc-border);
+        border-radius: 12px;
+        padding: 28px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      }
+      .card-title {
+        font-size: 1.15rem;
+        font-weight: 500;
+        margin-bottom: 20px;
+        text-align: center;
+        letter-spacing: -0.2px;
+      }
+      .form-group {
+        margin-bottom: 14px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--nc-text-dim);
+        margin-bottom: 6px;
+      }
+      .input-wrap {
+        position: relative;
+      }
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--nc-border);
+        border-radius: 8px;
+        color: var(--nc-text);
+        font-size: 0.95rem;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      input:focus {
+        border-color: var(--nc-blue);
+        box-shadow: 0 0 0 2px rgba(0, 130, 201, 0.35);
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        background: var(--nc-blue);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        transition:
+          background 0.2s,
+          opacity 0.2s;
+      }
+      .btn:hover {
+        background: var(--nc-dark);
+      }
+      .btn:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .alert {
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        margin-bottom: 16px;
+        display: none;
+        text-align: center;
+        background: rgba(233, 50, 45, 0.2);
+        border: 1px solid rgba(233, 50, 45, 0.4);
+        color: #ff9d9b;
+      }
+      .footer {
+        font-size: 0.8rem;
+        color: var(--nc-text-dim);
+        text-align: center;
+      }
+      .footer a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer a:hover {
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="logo">
+        <svg
+          width="68"
+          height="68"
+          viewBox="0 0 120 120"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle cx="60" cy="60" r="24" stroke="white" stroke-width="8" />
+          <circle cx="28" cy="60" r="16" stroke="white" stroke-width="8" />
+          <circle cx="92" cy="60" r="16" stroke="white" stroke-width="8" />
+        </svg>
+      </div>
+      <div class="card">
+        <div class="card-title">Storage Node Login</div>
+        <div id="e" class="alert"></div>
+        <form id="f" autocomplete="off">
+          <input type="hidden" name="requesttoken" id="t" value="" />
+          <div class="form-group">
+            <label for="u">Username or email</label>
+            <div class="input-wrap">
+              <input
+                type="text"
+                id="u"
+                name="user"
+                required
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="p">Password</label>
+            <div class="input-wrap">
+              <input type="password" id="p" name="password" required />
+            </div>
+          </div>
+          <button type="submit" id="b" class="btn">
+            <span class="spinner" id="s"></span>
+            <span id="bt">Log in</span>
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="footer">
+      <a href="https://nextcloud.com" target="_blank" rel="noreferrer noopener"
+        >Nextcloud</a
+      >
+      - A safe home for all your data
+    </div>
+    <script>
+      const tk = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+        .map((v) => v.toString(16).padStart(2, "0"))
+        .join("");
+      document.getElementById("t").value = tk;
+      const f = document.getElementById("f");
+      const b = document.getElementById("b");
+      const bt = document.getElementById("bt");
+      const s = document.getElementById("s");
+      const e = document.getElementById("e");
+      const u = document.getElementById("u");
+      const p = document.getElementById("p");
+
+      f.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        b.disabled = true;
+        s.style.display = "inline-block";
+        bt.textContent = "Authenticating...";
+        e.style.display = "none";
+
+        try {
+          const res = await fetch("/index.php/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              requesttoken: tk,
+            },
+            body: JSON.stringify({
+              user: u.value,
+              password: p.value,
+              requesttoken: tk,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error("Auth failed");
+          }
+
+          window.location.href = "/index.php/apps/files/";
+        } catch (err) {
+          b.disabled = false;
+          s.style.display = "none";
+          bt.textContent = "Log in";
+          e.textContent = "Wrong username or password.";
+          e.style.display = "block";
+          p.value = "";
+        }
+      });
+    </script>
+  </body>
+</html>

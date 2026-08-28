@@ -1,0 +1,74 @@
+services:
+  caddy:
+    image: caddy:2.11.4-alpine
+    container_name: caddy
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./index.html:/srv/index.html:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - PATH_PREFIX=${PATH_PREFIX}
+
+  hysteria:
+    image: tobyxdd/hysteria:v2.12.2
+    container_name: hysteria
+    cap_add:
+      - NET_BIND_SERVICE
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+      - 443:443/udp
+    volumes:
+      - hysteria_acme:/acme
+      - ./hysteria.yaml:/etc/hysteria.yaml:ro
+    command: ["server", "-c", "/etc/hysteria.yaml"]
+
+  warp:
+    image: caomingjun/warp:2026.6.880.0-2.12.0
+    container_name: warp
+    restart: unless-stopped
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - WARP_SLEEP=5
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp_data:/var/lib/cloudflare-warp
+
+  subscription-server:
+    container_name: subscription-server
+    image: ghcr.io/awesfdawe/subscription-server:0.0.3
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - subscription_server_data:/data
+      - ./config.yaml:/config/config.yaml
+      - ./users.yaml:/config/users.yaml
+      - ./hysteria2.json:/config/hysteria2.json
+
+volumes:
+  caddy_data:
+  caddy_config:
+  hysteria_acme:
+  warp_data:
+  subscription_server_data:

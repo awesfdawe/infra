@@ -1,5 +1,5 @@
 ---
 exclude_paths:
   - .ansible/
-  - .devenv/
   - /nix/store/
+  - inventory/

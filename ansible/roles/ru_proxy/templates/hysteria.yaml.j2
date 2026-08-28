@@ -1,0 +1,31 @@
+acme:
+  domains:
+    - {{ proxy_domain }}
+  email: {{ acme_email }}
+  ca: letsencrypt
+  type: http
+
+auth:
+  type: password
+  password: {{ proxy_password }}
+
+masquerade:
+  type: proxy
+  proxy: 
+    url: http://caddy:8080
+    xForwarded: true
+  listenHTTP: :80 
+  listenHTTPS: :443 
+  forceHTTPS: true
+
+outbounds:
+  - name: warp
+    type: socks5
+    socks5:
+      addr: warp:1080
+
+acl:
+  inline: 
+    - warp(geoip:TELEGRAM)
+    - warp(geoip:FACEBOOK)
+    - direct(all)
