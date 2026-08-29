@@ -12,7 +12,7 @@ auth:
 masquerade:
   type: proxy
   proxy: 
-    url: http://caddy:8080
+    url: unix:///var/run/caddy/caddy.sock
     xForwarded: true
   listenHTTP: :80 
   listenHTTPS: :443 

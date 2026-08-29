@@ -1,10 +1,18 @@
-:8080 {
+{
+	servers {
+		trusted_proxies_unix
+	}
+}
+
+http:// {
+    bind unix//var/run/caddy/caddy.sock|0600
+
     handle /index.php/login {
         respond "Incorrect login or password." 401
     }
 
     handle_path {$PATH_PREFIX}* {
-        reverse_proxy subscription-server:8000
+        reverse_proxy unix//var/run/subscription-server/subscription-server.sock
     }
 
     handle {

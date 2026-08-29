@@ -12,8 +12,10 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./index.html:/srv/index.html:ro
+      - caddy_sock:/var/run/caddy
       - caddy_data:/data
       - caddy_config:/config
+      - subscription-server_sock:/var/run/subscription-server
     environment:
       - PATH_PREFIX=${PATH_PREFIX}
 
@@ -32,8 +34,9 @@ services:
       - 443:443
       - 443:443/udp
     volumes:
-      - hysteria_acme:/acme
       - ./hysteria.yaml:/etc/hysteria.yaml:ro
+      - caddy_sock:/var/run/caddy
+      - hysteria_acme:/acme
     command: ["server", "-c", "/etc/hysteria.yaml"]
 
   warp:
@@ -54,21 +57,24 @@ services:
 
   subscription-server:
     container_name: subscription-server
-    image: ghcr.io/awesfdawe/subscription-server:0.0.3
+    image: ghcr.io/awesfdawe/subscription-server:0.0.4
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     volumes:
-      - subscription_server_data:/data
       - ./config.yaml:/config/config.yaml
       - ./users.yaml:/config/users.yaml
       - ./hysteria2.json:/config/hysteria2.json
+      - subscription-server_sock:/var/run/subscription-server
+      - subscription_server_data:/data
 
 volumes:
+  caddy_sock:
   caddy_data:
   caddy_config:
   hysteria_acme:
   warp_data:
+  subscription-server_sock:
   subscription_server_data:
