@@ -43,7 +43,9 @@
     content: |
       {
         "userland-proxy": false,
-        "userns-remap": "default"
+        "userns-remap": "default",
+        "log-driver": "journald",
+        "live-restore": true
       }
   notify: Restart docker
   become: true
