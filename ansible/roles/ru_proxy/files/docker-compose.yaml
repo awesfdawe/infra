@@ -16,6 +16,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - subscription-server_sock:/var/run/subscription-server
+    network_mode: none
     environment:
       - PATH_PREFIX=${PATH_PREFIX}
 
@@ -37,6 +38,8 @@ services:
       - ./hysteria.yaml:/etc/hysteria.yaml:ro
       - caddy_sock:/var/run/caddy
       - hysteria_acme:/acme
+    networks:
+      - hysteria
     command: ["server", "-c", "/etc/hysteria.yaml"]
 
   warp:
@@ -52,6 +55,8 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
       - net.ipv4.conf.all.src_valid_mark=1
+    networks:
+      - hysteria
     volumes:
       - warp_data:/var/lib/cloudflare-warp
 
@@ -69,6 +74,14 @@ services:
       - ./hysteria2.json:/config/hysteria2.json
       - subscription-server_sock:/var/run/subscription-server
       - subscription_server_data:/data
+    networks:
+      - subscription_server
+
+networks:
+  hysteria:
+    driver: bridge
+  subscription_server:
+    driver: bridge
 
 volumes:
   caddy_sock:
