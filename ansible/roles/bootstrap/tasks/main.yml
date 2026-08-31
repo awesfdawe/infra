@@ -39,9 +39,6 @@
     enabled: true
     state: started
   become: true
-
-- name: Include docker task
-  ansible.builtin.include_tasks: docker.yml
 # - name: Include crowdec task
 #   ansible.builtin.include_tasks: docker.yml
 # LATER

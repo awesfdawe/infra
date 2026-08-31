@@ -1,0 +1,32 @@
+---
+# Managed by Ansible
+base-url: https://{{ ntfy_domain }}
+
+listen-http: "-"
+
+listen-unix: /var/lib/ntfy/ntfy.sock
+listen-unix-mode: 660
+
+cache-file: /var/cache/ntfy/cache.db
+cache-duration: 24h
+cache-startup-queries: |
+  pragma journal_mode = WAL;
+  pragma synchronous = normal;
+
+auth-file: /var/lib/ntfy/user.db
+auth-default-access: "deny-all"
+auth-startup-queries: |
+  pragma journal_mode = WAL;
+  pragma synchronous = normal;
+
+behind-proxy: true
+proxy-forwarded-header: X-Forwarded-For
+proxy-trusted-hosts: 127.0.0.1
+
+attachment-cache-dir: /var/cache/ntfy/attachments
+attachment-total-size-limit: 2G
+attachment-file-size-limit: 15M
+attachment-expiry-duration: 24h
+
+require-login: true
+enable-login: true

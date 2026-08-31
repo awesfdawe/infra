@@ -1,0 +1,6 @@
+---
+- name: Include ntfy task
+  ansible.builtin.include_tasks: ntfy.yml
+
+- name: Include nginx task
+  ansible.builtin.include_tasks: nginx.yml

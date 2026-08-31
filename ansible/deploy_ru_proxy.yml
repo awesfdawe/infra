@@ -1,9 +1,12 @@
 ---
 - name: Deploy ru proxy server
-  hosts: all
-  gather_facts: false
+  hosts: ru_proxy
 
   tasks:
+    - name: Run docker role
+      ansible.builtin.include_role:
+        name: docker
+
     - name: Run ru proxy role
       ansible.builtin.include_role:
         name: ru_proxy

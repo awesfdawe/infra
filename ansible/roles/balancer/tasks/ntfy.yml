@@ -1,0 +1,71 @@
+---
+- name: Configure ntfy package repository
+  ansible.builtin.deb822_repository:
+    name: ntfy
+    types: deb
+    uris: https://archive.ntfy.sh/apt
+    suites: stable
+    components: main
+    signed_by: https://archive.ntfy.sh/apt/keyring.gpg
+  notify: Update apt cache
+  become: true
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Install ntfy
+  ansible.builtin.apt:
+    name: ntfy
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Deploy ntfy server configuration file
+  ansible.builtin.template:
+    src: ntfy.yml.j2
+    dest: /etc/ntfy/server.yml
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Systemd ntfy override
+  ansible.builtin.file:
+    path: /etc/systemd/system/ntfy.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Create runtime directory for ntfy
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ntfy.service.d/override.conf
+    content: |
+      [Service]
+      RuntimeDirectory=ntfy
+      RuntimeDirectoryMode=0750
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd
+    - Restart ntfy
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start ntfy service
+  ansible.builtin.systemd_service:
+    name: ntfy
+    enabled: true
+    state: started
+  become: true
+
+- name: Add ntfy group to www-data user
+  ansible.builtin.user:
+    name: www-data
+    groups: ntfy
+    append: true
+  become: true

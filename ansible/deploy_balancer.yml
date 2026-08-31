@@ -1,0 +1,8 @@
+---
+- name: Deploy balancer server
+  hosts: balancer
+
+  tasks:
+    - name: Run balancer role
+      ansible.builtin.include_role:
+        name: balancer
