@@ -77,12 +77,20 @@
   become: true
 
 - name: Copy subscription server users
+  vars:
+    raw_data: "{{ lookup('ansible.builtin.file', inventory_dir ~ '/group_vars/ru_proxy/users.yaml') | from_yaml }}"
+    anonymized_users: >-
+      {%- set res = {} -%}
+      {%- for key, val in (raw_data.users | dictsort) -%}
+        {%- set _ = res.update({"user" ~ loop.index: val}) -%}
+      {%- endfor -%}
+      {{ res }}
   ansible.builtin.copy:
-    src: "{{ inventory_dir }}/group_vars/ru_proxy/users.yaml"
     dest: /home/admin/proxy/users.yaml
     owner: 100000
     group: 100000
     mode: "0600"
+    content: "{{ {'users': anonymized_users} | to_nice_yaml(indent=2) }}"
   notify: Restart subscription server
   become: true
 
