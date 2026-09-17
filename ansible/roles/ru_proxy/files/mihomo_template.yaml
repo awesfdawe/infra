@@ -1,0 +1,228 @@
+mixed-port: 7890
+socks-port: 7891
+redir-port: 7892
+allow-lan: true
+mode: rule
+log-level: info
+unified-delay: true
+dns:
+  enable: true
+  use-hosts: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  default-nameserver:
+    - 1.1.1.1
+    - 8.8.8.8
+  nameserver:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+    - https://1.1.1.1/dns-query#По умолчанию
+    - https://8.8.8.8/dns-query#По умолчанию
+  nameserver-policy:
+    rule-set:geosite-private:
+      - system
+  fake-ip-filter:
+    - "*.lan"
+    - stun.*.*.*
+    - stun.*.*
+    - time.windows.com
+    - time.nist.gov
+    - time.apple.com
+    - time.asia.apple.com
+    - "*.openwrt.pool.ntp.org"
+    - pool.ntp.org
+    - ntp.ubuntu.com
+    - time1.apple.com
+    - time2.apple.com
+    - time3.apple.com
+    - time4.apple.com
+    - time5.apple.com
+    - time6.apple.com
+    - time7.apple.com
+    - time1.google.com
+    - time2.google.com
+    - time3.google.com
+    - time4.google.com
+    - api.joox.com
+    - joox.com
+    - "*.xiami.com"
+    - "*.msftconnecttest.com"
+    - "*.msftncsi.com"
+    - "+.xboxlive.com"
+    - "*.*.stun.playstation.net"
+    - xbox.*.*.microsoft.com
+    - "*.ipv6.microsoft.com"
+    - speedtest.cros.wr.pvp.net
+
+rule-providers:
+  geoip-private:
+    type: inline
+    behavior: ipcidr
+    payload:
+      - 0.0.0.0/8
+      - 10.0.0.0/8
+      - 100.64.0.0/10
+      - 127.0.0.0/8
+      - 169.254.0.0/16
+      - 172.16.0.0/12
+      - 192.0.0.0/24
+      - 192.0.2.0/24
+      - 192.88.99.0/24
+      - 192.168.0.0/16
+      - 198.18.0.0/15
+      - 198.51.100.0/24
+      - 203.0.113.0/24
+      - 224.0.0.0/3
+      - ::/127
+      - fc00::/7
+      - fe80::/10
+      - ff00::/8
+  geosite-private:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/private.mrs
+    path: ./rule-sets/geosite-private.mrs
+    interval: 86400
+    proxy: "По умолчанию"
+  torrent-clients:
+    behavior: classical
+    format: yaml
+    interval: 86400
+    path: ./rule-sets/torrent-clients.yaml
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/legiz-ru/mihomo-rule-sets/main/other/torrent-clients.yaml
+  games:
+    behavior: classical
+    format: yaml
+    interval: 86400
+    path: ./rule-sets/games.yaml
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/roscomvpn/custom-category/release/mihomo/games.yaml
+  category-ru:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/category-ru.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/category-ru.mrs
+  direct-domains:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/direct-domains.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/awesfdawe/remnawave-misc/refs/heads/release/direct.mrs
+  in-proxy-domains:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/in-proxy-domains.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/awesfdawe/remnawave-misc/refs/heads/release/in-proxy.mrs
+  microsoft:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/microsoft.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/microsoft.mrs
+  twitch:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/twitch.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/twitch.mrs
+  whitelist:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/whitelist.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/whitelist.mrs
+  steam:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/steam.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/steam.mrs
+  riot:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/riot.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/riot.mrs
+  ru-ips:
+    behavior: ipcidr
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/ru-ips.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geoip/refs/heads/master/release/mihomo/direct.mrs
+  origin:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/origin.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/origin.mrs
+  epicgames:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/epicgames.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/epicgames.mrs
+  faceit:
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./rule-sets/faceit.mrs
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/faceit.mrs
+
+proxies: # LEAVE THIS LINE!
+
+proxy-groups:
+  - name: "По умолчанию"
+    type: "select"
+    proxies: # LEAVE THIS LINE!
+
+rules:
+  - RULE-SET,geoip-private,DIRECT,no-resolve
+  - RULE-SET,geosite-private,DIRECT
+
+  - RULE-SET,direct-domains,DIRECT
+  - RULE-SET,in-proxy-domains,По умолчанию
+
+  - RULE-SET,category-ru,DIRECT
+  - RULE-SET,whitelist,DIRECT
+  - RULE-SET,microsoft,DIRECT
+  - RULE-SET,games,DIRECT
+  - RULE-SET,faceit,DIRECT
+  - RULE-SET,steam,DIRECT
+  - RULE-SET,origin,DIRECT
+  - RULE-SET,epicgames,DIRECT
+  - RULE-SET,riot,DIRECT
+  - RULE-SET,torrent-clients,DIRECT
+  - RULE-SET,twitch,DIRECT
+  - RULE-SET,ru-ips,DIRECT
+
+  - MATCH,По умолчанию

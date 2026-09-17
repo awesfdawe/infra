@@ -1,0 +1,22 @@
+app:
+  path_prefix: "/"
+  unix_socket_path: "/var/run/subscription-server/subscription-server.sock"
+  mihomo_template_path: "/config/mihomo_template.yaml"
+  trusted_ips: "*"
+  response_headers:
+    profile-update-interval: "3"
+    profile-title: "Kolotushka VPN"
+    announce: "base64:0KHQv9GA0LDQstCwINGB0LLQtdGA0YXRgyDQtdGB0YLRjCDQutC90L7Qv9C60LAg0YHQviDQt9C90LDRh9C60L7QvCDRgdC/0LjQtNC+0LzQtdGC0YDQsC4g0J3QsNC20LDQsiDQvdCwINC90LXRkSwg0LzQvtC20L3QviDQvdCw0LnRgtC4INGA0LDQsdC+0YfQuNC1INGB0LXRgNCy0LXRgNGLICjRgtC1LCDQs9C00LUg0LXRgdGC0Ywg0YbQuNGE0YDRizsg0L7QsdGL0YfQvdC+INGH0LXQvCDQvNC10L3RjNGI0LUsINGC0LXQvCDQu9GD0YfRiNC1KS4="
+
+proxy_providers:
+  self:
+    type: "file"
+    path: "/config/hysteria2.json"
+{% if proxy_providers is defined and proxy_providers %}
+{% for key, val in proxy_providers.items() %}
+{% if key != 'self' %}
+
+  {{ {key: val} | to_nice_yaml(indent=2, sort_keys=False) | indent(2) | trim }}
+{% endif %}
+{% endfor %}
+{% endif %}

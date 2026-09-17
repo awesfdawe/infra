@@ -46,6 +46,15 @@
     mode: "0644"
   become: true
 
+- name: Copy mihomo template file
+  ansible.builtin.copy:
+    src: mihomo_template.yaml
+    dest: /home/admin/proxy/mihomo_template.yaml
+    owner: 100000
+    group: 100000
+    mode: "0644"
+  become: true
+
 - name: Template hysteria config
   ansible.builtin.template:
     src: hysteria.yaml.j2
@@ -66,9 +75,9 @@
   notify: Restart subscription server
   become: true
 
-- name: Copy subscription server config
-  ansible.builtin.copy:
-    src: "{{ inventory_dir }}/group_vars/ru_proxy/config.yaml"
+- name: Template subscription server config
+  ansible.builtin.template:
+    src: config.yaml.j2
     dest: /home/admin/proxy/config.yaml
     owner: 100000
     group: 100000

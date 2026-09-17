@@ -46,8 +46,8 @@ services:
     container_name: warp
     image: ghcr.io/ccbkkb/microwarp:0.3.1
     restart: unless-stopped
-    cap_drop:  
-      - ALL  
+    cap_drop:
+      - ALL
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -67,7 +67,7 @@ services:
 
   subscription-server:
     container_name: subscription-server
-    image: ghcr.io/awesfdawe/subscription-server:0.0.5
+    image: ghcr.io/awesfdawe/subscription-server:0.0.7
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -76,6 +76,7 @@ services:
     volumes:
       - ./config.yaml:/config/config.yaml
       - ./users.yaml:/config/users.yaml
+      - ./mihomo_template.yaml:/config/mihomo_template.yaml
       - ./hysteria2.json:/config/hysteria2.json
       - subscription-server_sock:/var/run/subscription-server
       - subscription_server_data:/data
