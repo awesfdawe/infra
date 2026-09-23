@@ -13,7 +13,7 @@
     append: true
     groups: sudo
     shell: /bin/bash
-    password: "{{ users_admin_password | password_hash('yescrypt') }}"
+    password: "{{ users_admin_password_hash }}"
     update_password: on_create
   become: true
 

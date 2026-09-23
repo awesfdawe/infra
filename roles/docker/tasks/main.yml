@@ -61,3 +61,23 @@
     group: 1000
     mode: "0750"
   become: true
+
+- name: Give rwx acl for admin to files in docker volumes directory
+  ansible.posix.acl:
+    path: /mnt/docker-volumes
+    entity: admin
+    etype: user
+    permissions: rwx
+    state: present
+    recursive: true
+  become: true
+
+- name: Set default acl rules for admin in docker volumes directory
+  ansible.posix.acl:
+    path: /mnt/docker-volumes
+    entity: admin
+    etype: user
+    permissions: rwx
+    state: present
+    default: true
+  become: true
