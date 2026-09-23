@@ -14,9 +14,6 @@ proxy_providers:
     path: "/config/hysteria2.json"
 {% if proxy_providers is defined and proxy_providers %}
 {% for key, val in proxy_providers.items() %}
-{% if key != 'self' %}
-
   {{ {key: val} | to_nice_yaml(indent=2, sort_keys=False) | indent(2) | trim }}
-{% endif %}
 {% endfor %}
 {% endif %}
