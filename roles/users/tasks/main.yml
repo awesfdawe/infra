@@ -14,7 +14,6 @@
     groups: sudo
     shell: /bin/bash
     password: "{{ users_admin_password_hash }}"
-    update_password: on_create
   become: true
 
 - name: Set public key for admin user
