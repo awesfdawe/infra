@@ -1,0 +1,3 @@
+---
+- name: Include zram task
+  ansible.builtin.include_tasks: zram.yml

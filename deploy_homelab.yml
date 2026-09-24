@@ -7,6 +7,6 @@
       ansible.builtin.include_role:
         name: docker
 
-    # - name: Run homelab role
-    #   ansible.builtin.include_role:
-    #     name: homelab
+    - name: Run homelab role
+      ansible.builtin.include_role:
+        name: homelab

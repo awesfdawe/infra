@@ -1,0 +1,43 @@
+---
+- name: Install zram generator
+  ansible.builtin.apt:
+    name: systemd-zram-generator
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Config zram
+  ansible.builtin.copy:
+    content: |
+      [zram0]
+      zram-size = ram / 2
+      compression-algorithm = lz4
+      swap-priority = 100
+    dest: /etc/systemd/zram-generator.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart zram generator
+  become: true
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start zram service
+  ansible.builtin.systemd_service:
+    name: systemd-zram-setup@zram0.service
+    enabled: true
+    state: started
+  become: true
+
+- name: Optimize kernel for zram
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-zram.conf
+  loop:
+    - { name: "vm.swappiness", value: "180" }
+    - { name: "vm.watermark_boost_factor", value: "0" }
+    - { name: "vm.watermark_scale_factor", value: "125" }
+    - { name: "vm.page-cluster", value: "0" }
+  become: true

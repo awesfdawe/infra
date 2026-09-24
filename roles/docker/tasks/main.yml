@@ -59,7 +59,7 @@
     state: directory
     owner: 1000
     group: 1000
-    mode: "0750"
+    mode: "0770"
   become: true
 
 - name: Give rwx acl for admin to files in docker volumes directory
