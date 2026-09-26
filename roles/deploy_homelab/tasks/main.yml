@@ -1,0 +1,55 @@
+---
+- name: Ensure stacks directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ role_path }}/files"
+    - "{{ role_path }}/templates"
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Find available homelab stacks in files
+  ansible.builtin.find:
+    paths: "{{ role_path }}/files"
+    file_type: directory
+    recurse: false
+  delegate_to: localhost
+  become: false
+  register: deploy_homelab_discovered_files_stacks
+  when: deploy_homelab_stacks | length == 0
+
+- name: Find available homelab stacks in templates
+  ansible.builtin.find:
+    paths: "{{ role_path }}/templates"
+    file_type: directory
+    recurse: false
+  delegate_to: localhost
+  become: false
+  register: deploy_homelab_discovered_templates_stacks
+  when: deploy_homelab_stacks | length == 0
+
+- name: Set active homelab stacks list
+  ansible.builtin.set_fact:
+    deploy_homelab_active_stacks: >-
+      {{
+        deploy_homelab_stacks if (deploy_homelab_stacks | length > 0)
+        else (
+          (deploy_homelab_discovered_files_stacks.files | default([]) | map(attribute='path') | list)
+          +
+          (deploy_homelab_discovered_templates_stacks.files | default([]) | map(attribute='path') | list)
+        )
+      }}
+
+- name: Notice if no stacks were found
+  ansible.builtin.debug:
+    msg: "No homelab stacks found in files/ or templates/ to deploy."
+  when: deploy_homelab_active_stacks | length == 0
+
+- name: Deploy each homelab stack
+  ansible.builtin.include_tasks: deploy_stack.yml
+  loop: "{{ deploy_homelab_active_stacks }}"
+  loop_control:
+    loop_var: stack_item

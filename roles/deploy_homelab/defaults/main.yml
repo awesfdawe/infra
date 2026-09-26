@@ -1,0 +1,22 @@
+---
+# Base directory on the host where homelab services will be deployed (docker-compose and .env)
+deploy_homelab_base_dir: /home/admin
+
+# Base directory for container volumes and configurations
+deploy_homelab_volumes_dir: /mnt/docker-volumes
+
+# User and group that owns the service directories, compose and .env files, and config directories
+deploy_homelab_user: 1000
+deploy_homelab_group: 1000
+
+# Default file permissions for compose and .env
+deploy_homelab_compose_mode: "0644"
+deploy_homelab_env_mode: "0600"
+
+# Default permissions and ownership for additional configuration files
+deploy_homelab_default_mode: "0600"
+deploy_homelab_default_uid: 100000
+deploy_homelab_default_gid: 100000
+
+# Specific stacks to deploy. If left empty, all stack folders will be deployed.
+deploy_homelab_stacks: []

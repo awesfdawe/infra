@@ -7,5 +7,6 @@
 # inventory folder (temporary)
 inventory/
 
-# Python venv
+# Python
 .venv/
+__pycache__/

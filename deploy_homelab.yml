@@ -1,12 +1,8 @@
 ---
-- name: Deploy homelab server
+- name: Deploy homelab services
   hosts: homelab
 
   tasks:
-    - name: Run docker role
+    - name: Run deploy homelab role
       ansible.builtin.include_role:
-        name: docker
-
-    - name: Run homelab role
-      ansible.builtin.include_role:
-        name: homelab
+        name: deploy_homelab

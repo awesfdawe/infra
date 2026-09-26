@@ -1,0 +1,144 @@
+---
+- name: Set stack variables
+  ansible.builtin.set_fact:
+    deploy_homelab_current_stack_dir: >-
+      {{
+        stack_item if '/' in stack_item
+        else (
+          (role_path ~ '/templates/' ~ stack_item)
+          if ((role_path ~ '/templates/' ~ stack_item) is directory)
+          else (role_path ~ '/files/' ~ stack_item)
+        )
+      }}
+
+- name: Parse stack metadata
+  ansible.builtin.set_fact:
+    deploy_homelab_stack: >-
+      {{
+        deploy_homelab_current_stack_dir
+        | parse_stack_files(
+            default_mode=deploy_homelab_default_mode,
+            default_uid=deploy_homelab_default_uid,
+            default_gid=deploy_homelab_default_gid,
+            volumes_base=deploy_homelab_volumes_dir
+          )
+      }}
+    deploy_homelab_stack_dest: >-
+      {{
+        deploy_homelab_base_dir ~ '/' ~ (
+          deploy_homelab_current_stack_dir
+          | parse_stack_files(
+              default_mode=deploy_homelab_default_mode,
+              default_uid=deploy_homelab_default_uid,
+              default_gid=deploy_homelab_default_gid,
+              volumes_base=deploy_homelab_volumes_dir
+            )
+        ).name
+      }}
+
+- name: "Validate compose file exists for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.assert:
+    that:
+      - deploy_homelab_stack.compose_file is not none
+    fail_msg: "No docker-compose.yaml or docker-compose.yml found in {{ deploy_homelab_current_stack_dir }}"
+
+- name: "Create service directory for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.file:
+    path: "{{ deploy_homelab_stack_dest }}"
+    state: directory
+    owner: "{{ deploy_homelab_user }}"
+    group: "{{ deploy_homelab_group }}"
+    mode: "0750"
+  become: true
+
+- name: "Create volume directories from compose for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_homelab_user }}"
+    group: "{{ deploy_homelab_group }}"
+    mode: "0755"
+  loop: "{{ deploy_homelab_stack.volume_dirs }}"
+  become: true
+  when: deploy_homelab_stack.volume_dirs | length > 0
+
+- name: "Copy compose file for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.copy:
+    src: "{{ deploy_homelab_stack.compose_file }}"
+    dest: "{{ deploy_homelab_stack_dest }}/docker-compose.yaml"
+    owner: "{{ deploy_homelab_user }}"
+    group: "{{ deploy_homelab_group }}"
+    mode: "{{ deploy_homelab_compose_mode }}"
+  become: true
+
+- name: "Template .env file for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.template:
+    src: "{{ deploy_homelab_stack.env_file.src }}"
+    dest: "{{ deploy_homelab_stack_dest }}/.env"
+    owner: "{{ deploy_homelab_user }}"
+    group: "{{ deploy_homelab_group }}"
+    mode: "{{ deploy_homelab_env_mode }}"
+  when:
+    - deploy_homelab_stack.env_file is not none
+    - deploy_homelab_stack.env_file.is_template
+  become: true
+
+- name: "Copy static .env file for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.copy:
+    src: "{{ deploy_homelab_stack.env_file.src }}"
+    dest: "{{ deploy_homelab_stack_dest }}/.env"
+    owner: "{{ deploy_homelab_user }}"
+    group: "{{ deploy_homelab_group }}"
+    mode: "{{ deploy_homelab_env_mode }}"
+  when:
+    - deploy_homelab_stack.env_file is not none
+    - not deploy_homelab_stack.env_file.is_template
+  become: true
+
+- name: "Template additional config files for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest_path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ deploy_homelab_stack.config_files | selectattr('is_template') | list }}"
+  loop_control:
+    label: "{{ item.dest_path }} (mode={{ item.mode }}, owner={{ item.owner }}:{{ item.group }})"
+  register: deploy_homelab_templated_configs
+  become: true
+
+- name: "Copy additional static config files for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest_path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ deploy_homelab_stack.config_files | rejectattr('is_template') | list }}"
+  loop_control:
+    label: "{{ item.dest_path }} (mode={{ item.mode }}, owner={{ item.owner }}:{{ item.group }})"
+  register: deploy_homelab_copied_configs
+  become: true
+
+- name: "Check if any config files changed for {{ deploy_homelab_stack.name }}"
+  ansible.builtin.set_fact:
+    deploy_homelab_configs_changed: >-
+      {{
+        (deploy_homelab_templated_configs.changed | default(false)) or
+        (deploy_homelab_copied_configs.changed | default(false))
+      }}
+
+- name: "Up compose containers for {{ deploy_homelab_stack.name }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ deploy_homelab_stack_dest }}"
+    state: present
+  register: deploy_homelab_compose_up
+  become: true
+
+- name: "Restart service if configs changed for {{ deploy_homelab_stack.name }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ deploy_homelab_stack_dest }}"
+    state: restarted
+  when: deploy_homelab_configs_changed
+  become: true
