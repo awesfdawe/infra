@@ -26,6 +26,11 @@ http:
           Public-Key-Pins: ""
           Public-Key-Pins-Report-Only: ""
 
+    local-only:
+      ipAllowList:
+        sourceRange:
+          - "192.168.0.0/16"
+
 tls:
   options:
     default:
@@ -35,3 +40,4 @@ tls:
         - X25519
         - CurveP256
         - CurveP384
+      sniStrict: true

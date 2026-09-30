@@ -1,0 +1,23 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.37.3
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      DOMAIN: "https://vw.${DOMAIN}"
+      SIGNUPS_ALLOWED: false
+      INVITATIONS_ALLOWED: false
+    volumes:
+      - /mnt/docker-volumes/vaultwarden/vaultwarden/data:/data
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vw.${DOMAIN}`)"
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+      - "traefik.http.routers.vaultwarden.middlewares=local-only@file"
+
+networks:
+  proxy:
+    external: true
