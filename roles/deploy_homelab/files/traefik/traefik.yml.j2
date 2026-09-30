@@ -1,0 +1,45 @@
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    address: :443
+    http3: {}
+    http:
+      middlewares:
+        - "security-headers@file"
+      aliasHeadersStrategy: reject
+      tls:
+        certResolver: letsencrypt-dns
+        domains:
+          - main: "{{ domain }}"
+            sans:
+              - "*.{{ domain }}"
+
+providers:
+  docker:
+    endpoint: "tcp://socket-proxy:2375"
+    exposedByDefault: false
+    network: proxy
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+certificatesResolvers:
+  letsencrypt-dns:
+    acme:
+      email: "{{ traefik_letsencrypt_email }}"
+      storage: /acme/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
+log:
+  level: INFO

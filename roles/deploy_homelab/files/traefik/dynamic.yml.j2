@@ -1,0 +1,37 @@
+http:
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 604800
+        stsIncludeSubdomains: true
+        forceSTSHeader: true
+
+        contentTypeNosniff: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        browserXssFilter: false
+
+        customFrameOptionsValue: "SAMEORIGIN"
+        contentSecurityPolicy: "frame-ancestors 'self' *.{{ domain }};"
+
+        customResponseHeaders:
+          X-XSS-Protection: "0"
+          Cross-Origin-Opener-Policy: "same-origin-allow-popups"
+          Cross-Origin-Resource-Policy: "same-site"
+
+          Server: ""
+          X-Powered-By: ""
+          X-AspNet-Version: ""
+          X-AspNetMvc-Version: ""
+          Expect-CT: ""
+          Public-Key-Pins: ""
+          Public-Key-Pins-Report-Only: ""
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS13
+      curvePreferences:
+        - X25519MLKEM768
+        - X25519
+        - CurveP256
+        - CurveP384

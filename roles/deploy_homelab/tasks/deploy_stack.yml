@@ -55,9 +55,9 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ deploy_homelab_user }}"
-    group: "{{ deploy_homelab_group }}"
-    mode: "0755"
+    owner: "{{ deploy_homelab_user if item == deploy_homelab_volumes_dir else deploy_homelab_volumes_uid }}"
+    group: "{{ deploy_homelab_group if item == deploy_homelab_volumes_dir else deploy_homelab_volumes_gid }}"
+    mode: "{{ '0755' if item == deploy_homelab_volumes_dir else deploy_homelab_volumes_mode }}"
   loop: "{{ deploy_homelab_stack.volume_dirs }}"
   become: true
   when: deploy_homelab_stack.volume_dirs | length > 0

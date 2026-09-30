@@ -5,7 +5,7 @@ deploy_homelab_base_dir: /home/admin
 # Base directory for container volumes and configurations
 deploy_homelab_volumes_dir: /mnt/docker-volumes
 
-# User and group that owns the service directories, compose and .env files, and config directories
+# User and group that owns the service directories, compose and .env files
 deploy_homelab_user: 1000
 deploy_homelab_group: 1000
 
@@ -17,6 +17,11 @@ deploy_homelab_env_mode: "0600"
 deploy_homelab_default_mode: "0600"
 deploy_homelab_default_uid: 100000
 deploy_homelab_default_gid: 100000
+
+# Default permissions and ownership for container volume directories
+deploy_homelab_volumes_uid: 100000
+deploy_homelab_volumes_gid: 100000
+deploy_homelab_volumes_mode: "0755"
 
 # Specific stacks to deploy. If left empty, all stack folders will be deployed.
 deploy_homelab_stacks: []

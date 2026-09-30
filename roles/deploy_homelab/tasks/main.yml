@@ -48,6 +48,13 @@
     msg: "No homelab stacks found in files/ or templates/ to deploy."
   when: deploy_homelab_active_stacks | length == 0
 
+- name: Ensure docker proxy network exists
+  community.docker.docker_network:
+    name: proxy
+    state: present
+  become: true
+  when: deploy_homelab_active_stacks | length > 0
+
 - name: Deploy each homelab stack
   ansible.builtin.include_tasks: deploy_stack.yml
   loop: "{{ deploy_homelab_active_stacks }}"
