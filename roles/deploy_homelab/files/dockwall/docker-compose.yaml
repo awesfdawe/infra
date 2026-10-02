@@ -1,0 +1,17 @@
+services:
+  dockwall:
+    image: ghcr.io/awesfdawe/dockwall:v0.0.1
+    container_name: dockwall
+    restart: unless-stopped
+    network_mode: host
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    userns_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/docker-volumes/dockwall/dockwall/config/config.yaml:/etc/dockwall/config.yaml

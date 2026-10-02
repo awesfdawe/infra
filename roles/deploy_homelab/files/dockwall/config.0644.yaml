@@ -1,0 +1,5 @@
+policies:
+  - network: proxy
+    rules:
+      - from: traefik
+        to: "*"
