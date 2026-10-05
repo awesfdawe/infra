@@ -1,0 +1,24 @@
+---
+name: memos
+state: scaffold_only
+
+volumes:
+  - path: "{{ deploy_homelab_volumes_dir }}/memos/data"
+    owner: 100000
+    group: 100000
+
+configs:
+  - src: memos-idp-authelia.json.j2
+    dest: "{{ deploy_homelab_volumes_dir }}/memos/config/memos-idp-authelia.json"
+    owner: 110001
+    group: 110001
+    mode: "0600"
+  - src: memos-instance-setting-general.json
+    dest: "{{ deploy_homelab_volumes_dir }}/memos/config/memos-instance-setting-general.json"
+    owner: 110001
+    group: 110001
+    mode: "0644"
+
+manual_steps:
+  - "Start container manually"
+  - "Visit https://memos.{{ domain }} and register initial admin user"

@@ -1,144 +1,237 @@
 ---
-- name: Set stack variables
+- name: Set stack identity and paths
   ansible.builtin.set_fact:
-    deploy_homelab_current_stack_dir: >-
-      {{
-        stack_item if '/' in stack_item
-        else (
-          (role_path ~ '/templates/' ~ stack_item)
-          if ((role_path ~ '/templates/' ~ stack_item) is directory)
-          else (role_path ~ '/files/' ~ stack_item)
-        )
-      }}
+    deploy_homelab_current_dir: "{{ stack_item }}"
+    deploy_homelab_current_name: "{{ stack_item | basename }}"
+    deploy_homelab_current_manifest: "{{ stack_item }}/stack.yml"
+    deploy_homelab_manifest_data: {}
 
-- name: Parse stack metadata
+- name: "Check if stack.yml exists for {{ deploy_homelab_current_name }}"
+  ansible.builtin.stat:
+    path: "{{ deploy_homelab_current_manifest }}"
+  delegate_to: localhost
+  become: false
+  register: deploy_homelab_manifest_stat
+
+- name: "Load stack manifest for {{ deploy_homelab_current_name }}"
   ansible.builtin.set_fact:
-    deploy_homelab_stack: >-
+    deploy_homelab_manifest_data: "{{ lookup('template', deploy_homelab_current_manifest) | from_yaml }}"
+  when: deploy_homelab_manifest_stat.stat.exists
+
+- name: "Apply configuration for {{ deploy_homelab_current_name }}"
+  ansible.builtin.set_fact:
+    deploy_homelab_stack_cfg: >-
       {{
-        deploy_homelab_current_stack_dir
-        | parse_stack_files(
-            default_mode=deploy_homelab_default_mode,
-            default_uid=deploy_homelab_default_uid,
-            default_gid=deploy_homelab_default_gid,
-            volumes_base=deploy_homelab_volumes_dir
-          )
+        {
+          'enabled': true,
+          'state': 'automated',
+          'volumes': [],
+          'configs': [],
+          'manual_steps': []
+        }
+        | combine(deploy_homelab_manifest_data | default({}))
+        | combine(deploy_homelab_stack_overrides[deploy_homelab_current_name] | default({}))
       }}
-    deploy_homelab_stack_dest: >-
-      {{
-        deploy_homelab_base_dir ~ '/' ~ (
-          deploy_homelab_current_stack_dir
-          | parse_stack_files(
-              default_mode=deploy_homelab_default_mode,
-              default_uid=deploy_homelab_default_uid,
-              default_gid=deploy_homelab_default_gid,
-              volumes_base=deploy_homelab_volumes_dir
+    deploy_homelab_stack_dest: "{{ deploy_homelab_base_dir }}/{{ deploy_homelab_current_name }}"
+
+- name: "Process stack deployment for {{ deploy_homelab_current_name }}"
+  when: deploy_homelab_stack_cfg.enabled
+  block:
+    - name: "Run pre-deployment tasks for {{ deploy_homelab_current_name }}"
+      ansible.builtin.include_tasks: "{{ deploy_homelab_current_dir }}/pre_tasks.yml"
+      when: (deploy_homelab_current_dir ~ '/pre_tasks.yml') is file
+
+    - name: "Create service directory for {{ deploy_homelab_current_name }}"
+      ansible.builtin.file:
+        path: "{{ deploy_homelab_stack_dest }}"
+        state: directory
+        owner: "{{ deploy_homelab_user }}"
+        group: "{{ deploy_homelab_group }}"
+        mode: "0750"
+      become: true
+
+    - name: "Create volume directories for {{ deploy_homelab_current_name }}"
+      ansible.builtin.file:
+        path: "{{ item.path | default(item) }}"
+        state: directory
+        owner: "{{ item.owner | default(deploy_homelab_volumes_uid) }}"
+        group: "{{ item.group | default(deploy_homelab_volumes_gid) }}"
+        mode: "{{ item.mode | default(deploy_homelab_volumes_mode) }}"
+      loop: "{{ deploy_homelab_stack_cfg.volumes }}"
+      loop_control:
+        label: "{{ item.path | default(item) }}"
+      become: true
+
+    - name: "Ensure config parent directories exist for {{ deploy_homelab_current_name }}"
+      ansible.builtin.file:
+        path: "{{ item.dest | dirname }}"
+        state: directory
+        owner: "{{ item.owner | default(deploy_homelab_volumes_uid) }}"
+        group: "{{ item.group | default(deploy_homelab_volumes_gid) }}"
+        mode: "{{ item.dir_mode | default('0755') }}"
+      loop: "{{ deploy_homelab_stack_cfg.configs }}"
+      loop_control:
+        label: "{{ item.dest | dirname }}"
+      become: true
+
+    - name: "Detect compose and env files for {{ deploy_homelab_current_name }}"
+      ansible.builtin.set_fact:
+        deploy_homelab_compose_file: >-
+          {{
+            (deploy_homelab_current_dir ~ '/docker-compose.yaml.j2') if ((deploy_homelab_current_dir ~ '/docker-compose.yaml.j2') is file)
+            else (
+              (deploy_homelab_current_dir ~ '/docker-compose.yml.j2') if ((deploy_homelab_current_dir ~ '/docker-compose.yml.j2') is file)
+              else (
+                (deploy_homelab_current_dir ~ '/docker-compose.yaml') if ((deploy_homelab_current_dir ~ '/docker-compose.yaml') is file)
+                else (
+                  (deploy_homelab_current_dir ~ '/docker-compose.yml') if ((deploy_homelab_current_dir ~ '/docker-compose.yml') is file)
+                  else none
+                )
+              )
             )
-        ).name
-      }}
+          }}
+        deploy_homelab_env_file: >-
+          {{
+            (deploy_homelab_current_dir ~ '/.env.j2') if ((deploy_homelab_current_dir ~ '/.env.j2') is file)
+            else (
+              (deploy_homelab_current_dir ~ '/.env') if ((deploy_homelab_current_dir ~ '/.env') is file)
+              else none
+            )
+          }}
 
-- name: "Validate compose file exists for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.assert:
-    that:
-      - deploy_homelab_stack.compose_file is not none
-    fail_msg: "No docker-compose.yaml or docker-compose.yml found in {{ deploy_homelab_current_stack_dir }}"
+    - name: "Validate compose file exists for {{ deploy_homelab_current_name }}"
+      ansible.builtin.assert:
+        that:
+          - deploy_homelab_compose_file is not none
+        fail_msg: "No docker-compose file found in {{ deploy_homelab_current_dir }}"
 
-- name: "Create service directory for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.file:
-    path: "{{ deploy_homelab_stack_dest }}"
-    state: directory
-    owner: "{{ deploy_homelab_user }}"
-    group: "{{ deploy_homelab_group }}"
-    mode: "0750"
-  become: true
+    - name: "Template compose file for {{ deploy_homelab_current_name }}"
+      ansible.builtin.template:
+        src: "{{ deploy_homelab_compose_file }}"
+        dest: "{{ deploy_homelab_stack_dest }}/docker-compose.yaml"
+        owner: "{{ deploy_homelab_user }}"
+        group: "{{ deploy_homelab_group }}"
+        mode: "{{ deploy_homelab_compose_mode }}"
+      when: deploy_homelab_compose_file is search('\\.j2$')
+      register: deploy_homelab_compose_template_res
+      become: true
 
-- name: "Create volume directories from compose for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ deploy_homelab_user if item == deploy_homelab_volumes_dir else deploy_homelab_volumes_uid }}"
-    group: "{{ deploy_homelab_group if item == deploy_homelab_volumes_dir else deploy_homelab_volumes_gid }}"
-    mode: "{{ '0755' if item == deploy_homelab_volumes_dir else deploy_homelab_volumes_mode }}"
-  loop: "{{ deploy_homelab_stack.volume_dirs }}"
-  become: true
-  when: deploy_homelab_stack.volume_dirs | length > 0
+    - name: "Copy static compose file for {{ deploy_homelab_current_name }}"
+      ansible.builtin.copy:
+        src: "{{ deploy_homelab_compose_file }}"
+        dest: "{{ deploy_homelab_stack_dest }}/docker-compose.yaml"
+        owner: "{{ deploy_homelab_user }}"
+        group: "{{ deploy_homelab_group }}"
+        mode: "{{ deploy_homelab_compose_mode }}"
+      when: not (deploy_homelab_compose_file is search('\\.j2$'))
+      register: deploy_homelab_compose_copy_res
+      become: true
 
-- name: "Copy compose file for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.copy:
-    src: "{{ deploy_homelab_stack.compose_file }}"
-    dest: "{{ deploy_homelab_stack_dest }}/docker-compose.yaml"
-    owner: "{{ deploy_homelab_user }}"
-    group: "{{ deploy_homelab_group }}"
-    mode: "{{ deploy_homelab_compose_mode }}"
-  become: true
+    - name: "Template .env file for {{ deploy_homelab_current_name }}"
+      ansible.builtin.template:
+        src: "{{ deploy_homelab_env_file }}"
+        dest: "{{ deploy_homelab_stack_dest }}/.env"
+        owner: "{{ deploy_homelab_user }}"
+        group: "{{ deploy_homelab_group }}"
+        mode: "{{ deploy_homelab_env_mode }}"
+      when:
+        - deploy_homelab_env_file is not none
+        - deploy_homelab_env_file is search('\\.j2$')
+      register: deploy_homelab_env_template_res
+      become: true
 
-- name: "Template .env file for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.template:
-    src: "{{ deploy_homelab_stack.env_file.src }}"
-    dest: "{{ deploy_homelab_stack_dest }}/.env"
-    owner: "{{ deploy_homelab_user }}"
-    group: "{{ deploy_homelab_group }}"
-    mode: "{{ deploy_homelab_env_mode }}"
-  when:
-    - deploy_homelab_stack.env_file is not none
-    - deploy_homelab_stack.env_file.is_template
-  become: true
+    - name: "Copy static .env file for {{ deploy_homelab_current_name }}"
+      ansible.builtin.copy:
+        src: "{{ deploy_homelab_env_file }}"
+        dest: "{{ deploy_homelab_stack_dest }}/.env"
+        owner: "{{ deploy_homelab_user }}"
+        group: "{{ deploy_homelab_group }}"
+        mode: "{{ deploy_homelab_env_mode }}"
+      when:
+        - deploy_homelab_env_file is not none
+        - not (deploy_homelab_env_file is search('\\.j2$'))
+      register: deploy_homelab_env_copy_res
+      become: true
 
-- name: "Copy static .env file for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.copy:
-    src: "{{ deploy_homelab_stack.env_file.src }}"
-    dest: "{{ deploy_homelab_stack_dest }}/.env"
-    owner: "{{ deploy_homelab_user }}"
-    group: "{{ deploy_homelab_group }}"
-    mode: "{{ deploy_homelab_env_mode }}"
-  when:
-    - deploy_homelab_stack.env_file is not none
-    - not deploy_homelab_stack.env_file.is_template
-  become: true
+    - name: "Template config files for {{ deploy_homelab_current_name }}"
+      ansible.builtin.template:
+        src: "{{ deploy_homelab_current_dir }}/{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ item.owner | default(deploy_homelab_default_uid) }}"
+        group: "{{ item.group | default(deploy_homelab_default_gid) }}"
+        mode: "{{ item.mode | default(deploy_homelab_default_mode) }}"
+      loop: "{{ deploy_homelab_stack_cfg.configs | selectattr('src', 'search', '\\.j2$') | list }}"
+      loop_control:
+        label: "{{ item.dest }}"
+      register: deploy_homelab_configs_template_res
+      become: true
 
-- name: "Template additional config files for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest_path }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
-  loop: "{{ deploy_homelab_stack.config_files | selectattr('is_template') | list }}"
-  loop_control:
-    label: "{{ item.dest_path }} (mode={{ item.mode }}, owner={{ item.owner }}:{{ item.group }})"
-  register: deploy_homelab_templated_configs
-  become: true
+    - name: "Copy static config files for {{ deploy_homelab_current_name }}"
+      ansible.builtin.copy:
+        src: "{{ deploy_homelab_current_dir }}/{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ item.owner | default(deploy_homelab_default_uid) }}"
+        group: "{{ item.group | default(deploy_homelab_default_gid) }}"
+        mode: "{{ item.mode | default(deploy_homelab_default_mode) }}"
+      loop: "{{ deploy_homelab_stack_cfg.configs | rejectattr('src', 'search', '\\.j2$') | list }}"
+      loop_control:
+        label: "{{ item.dest }}"
+      register: deploy_homelab_configs_copy_res
+      become: true
 
-- name: "Copy additional static config files for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest_path }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
-  loop: "{{ deploy_homelab_stack.config_files | rejectattr('is_template') | list }}"
-  loop_control:
-    label: "{{ item.dest_path }} (mode={{ item.mode }}, owner={{ item.owner }}:{{ item.group }})"
-  register: deploy_homelab_copied_configs
-  become: true
+    - name: "Evaluate if configs changed for {{ deploy_homelab_current_name }}"
+      ansible.builtin.set_fact:
+        deploy_homelab_configs_changed: >-
+          {{
+            (deploy_homelab_compose_template_res.changed | default(false)) or
+            (deploy_homelab_compose_copy_res.changed | default(false)) or
+            (deploy_homelab_env_template_res.changed | default(false)) or
+            (deploy_homelab_env_copy_res.changed | default(false)) or
+            ((deploy_homelab_configs_template_res.results | default([]) | selectattr('changed') | list | length) > 0) or
+            ((deploy_homelab_configs_copy_res.results | default([]) | selectattr('changed') | list | length) > 0)
+          }}
 
-- name: "Check if any config files changed for {{ deploy_homelab_stack.name }}"
-  ansible.builtin.set_fact:
-    deploy_homelab_configs_changed: >-
-      {{
-        (deploy_homelab_templated_configs.changed | default(false)) or
-        (deploy_homelab_copied_configs.changed | default(false))
-      }}
+    - name: "Run docker compose up (automated) for {{ deploy_homelab_current_name }}"
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_homelab_stack_dest }}"
+        state: present
+      register: deploy_homelab_compose_up_res
+      become: true
+      when: deploy_homelab_stack_cfg.state == 'automated'
 
-- name: "Up compose containers for {{ deploy_homelab_stack.name }}"
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_homelab_stack_dest }}"
-    state: present
-  register: deploy_homelab_compose_up
-  become: true
+    - name: "Restart service if configs changed (automated) for {{ deploy_homelab_current_name }}"
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_homelab_stack_dest }}"
+        state: restarted
+      become: true
+      when:
+        - deploy_homelab_stack_cfg.state == 'automated'
+        - deploy_homelab_configs_changed
+        - not (deploy_homelab_compose_up_res.changed | default(false))
 
-- name: "Restart service if configs changed for {{ deploy_homelab_stack.name }}"
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_homelab_stack_dest }}"
-    state: restarted
-  when: deploy_homelab_configs_changed
-  become: true
+    - name: "Stop service (stopped) for {{ deploy_homelab_current_name }}"
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_homelab_stack_dest }}"
+        state: stopped
+      become: true
+      when: deploy_homelab_stack_cfg.state == 'stopped'
+
+    - name: "Run post-deployment tasks for {{ deploy_homelab_current_name }}"
+      ansible.builtin.include_tasks: "{{ deploy_homelab_current_dir }}/post_tasks.yml"
+      when: (deploy_homelab_current_dir ~ '/post_tasks.yml') is file
+
+    - name: "Record manual steps or scaffold notice for {{ deploy_homelab_current_name }}"
+      ansible.builtin.set_fact:
+        deploy_homelab_manual_summary: >-
+          {{
+            deploy_homelab_manual_summary + [{
+              'stack': deploy_homelab_current_name,
+              'state': deploy_homelab_stack_cfg.state,
+              'steps': (
+                deploy_homelab_stack_cfg.manual_steps
+                if (deploy_homelab_stack_cfg.manual_steps | length > 0)
+                else ['Files scaffolded. Start manually: docker compose -f ' ~ deploy_homelab_stack_dest ~ '/docker-compose.yaml up -d']
+              )
+            }]
+          }}
+      when: (deploy_homelab_stack_cfg.manual_steps | length > 0) or (deploy_homelab_stack_cfg.state == 'scaffold_only')

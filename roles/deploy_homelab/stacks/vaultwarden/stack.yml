@@ -1,0 +1,6 @@
+---
+name: vaultwarden
+state: automated
+
+volumes:
+  - path: "{{ deploy_homelab_volumes_dir }}/vaultwarden/data"

@@ -1,0 +1,11 @@
+policies:
+  - network: proxy
+    rules:
+      - from: traefik
+        to: "*"
+      - from: "*"
+        to: traefik
+  - network: authelia
+    rules:
+      - from: "*"
+        to: authelia

@@ -1,0 +1,8 @@
+---
+name: dockwall
+state: automated
+
+configs:
+  - src: config.yaml
+    dest: "{{ deploy_homelab_volumes_dir }}/dockwall/config/config.yaml"
+    mode: "0644"

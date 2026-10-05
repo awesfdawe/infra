@@ -14,4 +14,4 @@ services:
     userns_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /mnt/docker-volumes/dockwall/dockwall/config/config.yaml:/etc/dockwall/config.yaml
+      - /mnt/docker-volumes/dockwall/config/config.yaml:/etc/dockwall/config.yaml

@@ -31,16 +31,18 @@ services:
       - 192.168.1.10:443:443
       - 192.168.1.10:443:443/udp
     volumes:
-      - /mnt/docker-volumes/traefik/traefik/data/acme:/acme
-      - /mnt/docker-volumes/traefik/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
-      - /mnt/docker-volumes/traefik/traefik/config/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /mnt/docker-volumes/traefik/data/acme:/acme
+      - /mnt/docker-volumes/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /mnt/docker-volumes/traefik/config/dynamic.yml:/etc/traefik/dynamic.yml:ro
     environment:
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
     depends_on:
       - socket-proxy
     networks:
-      - default
-      - proxy
+      default:
+      proxy:
+        aliases:
+          - "auth.${DOMAIN}"
 
 networks:
   proxy:

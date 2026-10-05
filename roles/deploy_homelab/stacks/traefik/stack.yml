@@ -1,0 +1,15 @@
+---
+name: traefik
+state: automated
+
+volumes:
+  - path: "{{ deploy_homelab_volumes_dir }}/traefik/data/acme"
+    mode: "0700"
+
+configs:
+  - src: traefik.yml.j2
+    dest: "{{ deploy_homelab_volumes_dir }}/traefik/config/traefik.yml"
+    mode: "0600"
+  - src: dynamic.yml.j2
+    dest: "{{ deploy_homelab_volumes_dir }}/traefik/config/dynamic.yml"
+    mode: "0600"

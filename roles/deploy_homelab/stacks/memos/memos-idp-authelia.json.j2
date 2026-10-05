@@ -1,0 +1,26 @@
+{
+  "uid": "authelia",
+  "name": "Authelia",
+  "type": "OAUTH2",
+  "identifierFilter": "",
+  "config": {
+    "oauth2Config": {
+      "clientId": "memos",
+      "clientSecret": "{{ authelia_client_memos_secret }}",
+      "authUrl": "https://auth.{{ domain }}/api/oidc/authorization",
+      "tokenUrl": "https://auth.{{ domain }}/api/oidc/token",
+      "userInfoUrl": "https://auth.{{ domain }}/api/oidc/userinfo",
+      "scopes": [
+        "openid",
+        "profile",
+        "email"
+      ],
+      "fieldMapping": {
+        "identifier": "preferred_username",
+        "displayName": "name",
+        "email": "email",
+        "avatarUrl": "picture"
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+services:
+  memos:
+    image: neosmemo/memos:0.31.0
+    container_name: memos
+    restart: unless-stopped
+    volumes:
+      - /mnt/docker-volumes/memos/data:/var/opt/memos
+      - /mnt/docker-volumes/memos/config:/etc/secrets:ro
+    environment:
+      MEMOS_INSTANCE_URL: https://memos.${DOMAIN}
+    networks:
+      - proxy
+      - authelia
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.memos.entrypoints=websecure"
+      - "traefik.http.routers.memos.rule=Host(`memos.${DOMAIN}`)"
+      - "traefik.http.services.memos.loadbalancer.server.port=5230"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+
+networks:
+  proxy:
+    external: true
+  authelia:
+    external: true

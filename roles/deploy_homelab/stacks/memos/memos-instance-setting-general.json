@@ -1,0 +1,7 @@
+{
+  "key": "GENERAL",
+  "generalSetting": {
+    "disallowUserRegistration": false,
+    "disallowPasswordAuth": true
+  }
+}

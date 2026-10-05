@@ -13,7 +13,7 @@ deploy_homelab_group: 1000
 deploy_homelab_compose_mode: "0644"
 deploy_homelab_env_mode: "0600"
 
-# Default permissions and ownership for additional configuration files
+# Default permissions and ownership for configuration files
 deploy_homelab_default_mode: "0600"
 deploy_homelab_default_uid: 100000
 deploy_homelab_default_gid: 100000
@@ -23,5 +23,17 @@ deploy_homelab_volumes_uid: 100000
 deploy_homelab_volumes_gid: 100000
 deploy_homelab_volumes_mode: "0755"
 
-# Specific stacks to deploy. If left empty, all stack folders will be deployed.
+# External docker networks to ensure exist before deploying stacks
+deploy_homelab_external_networks:
+  - proxy
+  - authelia
+
+# Specific stacks to deploy. If empty, all stacks in roles/deploy_homelab/stacks/ are deployed.
 deploy_homelab_stacks: []
+
+# Optional overrides for stack configurations (state, enabled, etc.)
+# Example:
+# deploy_homelab_stack_overrides:
+#   memos:
+#     state: automated
+deploy_homelab_stack_overrides: {}

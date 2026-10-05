@@ -1,0 +1,14 @@
+---
+name: authelia
+state: automated
+
+volumes:
+  - path: "{{ deploy_homelab_volumes_dir }}/authelia/lldap/data"
+    owner: 101000
+    group: 101000
+  - path: "{{ deploy_homelab_volumes_dir }}/authelia/authelia/data"
+
+configs:
+  - src: configuration.yaml.j2
+    dest: "{{ deploy_homelab_volumes_dir }}/authelia/authelia/config/configuration.yaml"
+    mode: "0600"

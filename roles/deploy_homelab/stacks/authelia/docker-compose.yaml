@@ -1,0 +1,62 @@
+services:
+  lldap:
+    image: lldap/lldap:v0.6.3
+    container_name: lldap
+    volumes:
+      - /mnt/docker-volumes/authelia/lldap/data:/data
+    environment:
+      TZ: ${TZ}
+      LLDAP_JWT_SECRET: ${LLDAP_JWT_SECRET}
+      LLDAP_KEY_SEED: ${LLDAP_KEY_SEED}
+      LLDAP_LDAP_BASE_DN: ${LLDAP_LDAP_BASE_DN}
+      LLDAP_LDAP_USER_PASS: ${LLDAP_LDAP_USER_PASS}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.lldap.entrypoints=websecure"
+      - "traefik.http.routers.lldap.rule=Host(`lldap.${DOMAIN}`)"
+      - "traefik.http.services.lldap.loadbalancer.server.port=17170"
+      - "traefik.http.routers.lldap.middlewares=local-only@file"
+    networks:
+      - default
+      - proxy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+      - KILL
+    restart: unless-stopped
+
+  authelia:
+    image: authelia/authelia:4.39.28
+    container_name: authelia
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy
+      - authelia
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - /mnt/docker-volumes/authelia/authelia/config/configuration.yaml:/config/configuration.yml:ro
+      - /mnt/docker-volumes/authelia/authelia/data:/data
+    depends_on:
+      lldap:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+
+networks:
+  proxy:
+    external: true
+  authelia:
+    external: true
