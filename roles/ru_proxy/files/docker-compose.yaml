@@ -62,6 +62,7 @@ services:
       - hysteria
     environment:
       - ALLOW_NO_AUTH=1
+      - TUNNEL_PROTOCOL=masque
     security_opt:
       - no-new-privileges:true
 
