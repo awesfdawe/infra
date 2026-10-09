@@ -36,4 +36,6 @@ deploy_homelab_stacks: []
 # deploy_homelab_stack_overrides:
 #   memos:
 #     state: automated
-deploy_homelab_stack_overrides: {}
+deploy_homelab_stack_overrides:
+  memos:
+    state: stopped
