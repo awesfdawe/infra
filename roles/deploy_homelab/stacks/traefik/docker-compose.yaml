@@ -17,7 +17,7 @@ services:
     userns_mode: host
 
   traefik:
-    image: traefik:3.7.13
+    image: traefik:v3.7.14
     container_name: traefik
     restart: unless-stopped
     cap_drop:
