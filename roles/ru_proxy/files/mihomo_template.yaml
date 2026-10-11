@@ -197,6 +197,14 @@ rule-providers:
     proxy: "По умолчанию"
     type: http
     url: https://raw.githubusercontent.com/hydraponique/roscomvpn-geosite/refs/heads/master/release/mihomo/faceit.mrs
+  linux-direct:
+    behavior: classical
+    format: yaml
+    interval: 86400
+    path: ./rule-sets/linux.yaml
+    proxy: "По умолчанию"
+    type: http
+    url: https://raw.githubusercontent.com/awesfdawe/remnawave-misc/refs/heads/main/mihomo/rule-sets/linux.yaml
 
 proxies: # LEAVE THIS LINE!
 
@@ -211,6 +219,7 @@ rules:
 
   - RULE-SET,direct-domains,DIRECT
   - RULE-SET,in-proxy-domains,По умолчанию
+  - RULE-SET,linux-direct,DIRECT
 
   - RULE-SET,category-ru,DIRECT
   - RULE-SET,whitelist,DIRECT

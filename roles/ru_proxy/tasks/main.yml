@@ -53,6 +53,7 @@
     owner: 100000
     group: 100000
     mode: "0644"
+  notify: Restart subscription server
   become: true
 
 - name: Template hysteria config
