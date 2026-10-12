@@ -209,12 +209,12 @@
         - deploy_homelab_configs_changed
         - not (deploy_homelab_compose_up_res.changed | default(false))
 
-    - name: "Stop service (stopped) for {{ deploy_homelab_current_name }}"
+    - name: "Tear down service (stopped) for {{ deploy_homelab_current_name }}"
       community.docker.docker_compose_v2:
         project_src: "{{ deploy_homelab_stack_dest }}"
-        state: stopped
+        state: absent
       become: true
-      when: deploy_homelab_stack_cfg.state == 'stopped'
+      when: deploy_homelab_stack_cfg.state in ['stopped', 'absent', 'down']
 
     - name: "Run post-deployment tasks for {{ deploy_homelab_current_name }}"
       ansible.builtin.include_tasks: "{{ deploy_homelab_current_dir }}/post_tasks.yml"
