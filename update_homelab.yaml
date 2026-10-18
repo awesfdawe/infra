@@ -1,0 +1,52 @@
+---
+- name: Update homelab docker services
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Get running docker compose projects
+      ansible.builtin.command:
+        cmd: docker compose ls --format json
+      register: homelab_running_projects_raw
+      changed_when: false
+
+    - name: Set running compose projects
+      ansible.builtin.set_fact:
+        homelab_running_projects: >-
+          {{
+            (homelab_running_projects_raw.stdout | from_json)
+            if (homelab_running_projects_raw.stdout | trim | length > 0)
+            else []
+          }}
+
+    - name: Discover running services per project
+      ansible.builtin.command:
+        cmd: >-
+          docker compose -f {{ (item.ConfigFiles | default(item.configFiles | default(''))).split(',')[0] }}
+          ps --status running --format {% raw %}'{{.Service}}'{% endraw %}
+      loop: "{{ homelab_running_projects }}"
+      loop_control:
+        label: "{{ item.Name | default(item.name | default('project')) }}"
+      register: homelab_running_services_raw
+      changed_when: false
+      when:
+        - (item.ConfigFiles | default(item.configFiles | default(''))) | length > 0
+
+    - name: Pull and update running compose services
+      community.docker.docker_compose_v2:
+        project_src: "{{ (item.item.ConfigFiles | default(item.item.configFiles)).split(',')[0] | dirname }}"
+        pull: always
+        state: present
+        services: "{{ item.stdout_lines }}"
+      loop: "{{ homelab_running_services_raw.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.Name | default(item.item.name | default('project')) }}"
+      when:
+        - not (item.skipped | default(false))
+        - item.stdout_lines | length > 0
+
+    - name: Prune obsolete docker images
+      ansible.builtin.command:
+        cmd: docker image prune -a -f
+      register: homelab_prune_images
+      changed_when: "'Deleted Images:' in homelab_prune_images.stdout"
