@@ -68,7 +68,7 @@ services:
 
   subscription-server:
     container_name: subscription-server
-    image: ghcr.io/awesfdawe/subscription-server:0.0.8
+    image: ghcr.io/awesfdawe/subscription-server:0.0.9
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
